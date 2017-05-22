@@ -1,0 +1,302 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Cash Log Backend
+# during dev, should point to your local machine
+host: localhost:10014
+# basePath prefixes all resource paths
+basePath: /
+#
+schemes:
+  # tip: remove http to make production-grade
+  - http
+  - https
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+paths:
+  /cashlog:
+    x-swagger-router-controller: CashLogController
+    get:
+      summary: Returns all cash log items
+      description: Returns all cash log items
+      operationId: getCashLogs
+      tags: ["CashLog"]
+      parameters:
+        - $ref: "#/parameters/AuthHeader"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/CashLogArrayResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+    post:
+      summary: Creates a new cash log
+      description: Creates a new cash log
+      operationId: createCashLog
+      tags: ["CashLog"]
+      parameters:
+        - $ref: "#/parameters/AuthHeader"
+        - name: cashlog
+          in: body
+          description: The cash log item
+          required: true
+          schema:
+            $ref: '#/definitions/CashLogPostBody'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/CashLogSingleResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /cashlog/recent:
+    x-swagger-router-controller: CashLogController
+    get:
+      summary: Returns recent cash log items
+      description: Returns recent cash log items
+      operationId: getRecentCashLogs
+      tags: ["CashLog"]
+      parameters:
+        - $ref: "#/parameters/AuthHeader"
+        - name: date
+          in: query
+          description: Get cash logs from this date only
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/CashLogArrayResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /cashlog/last:
+    x-swagger-router-controller: CashLogController
+    get:
+      summary: Returns last cash log item
+      description: Returns last cash log
+      operationId: getLastCashLog
+      tags: ["CashLog"]
+      parameters:
+        - $ref: "#/parameters/AuthHeader"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/CashLogSingleResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /cashlog/refund:
+    x-swagger-router-controller: RefundController
+    post:
+      summary: Create a new Refund
+      description: Creates a Laundry or Vending refund
+      operationId: createRefund
+      tags: ["CashLog"]
+      parameters:
+        - $ref: "#/parameters/AuthHeader"
+        - name: RefundBody
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/RefundPostBody"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/CashLogSingleResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+# complex objects have schema definitions
+definitions:
+  CashLogSingleResponse:
+    required:
+      - status
+      - error
+      - description
+    properties:
+      status:
+        type: integer
+      error:
+        type: boolean
+        default: false
+      description:
+        type: string
+      data:
+        $ref: "#/definitions/CashLogEntry"
+  CashLogArrayResponse:
+    required:
+      - status
+      - error
+      - description
+      - data
+    properties:
+      status:
+        type: integer
+      error:
+        type: boolean
+      description:
+        type: string
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/CashLogEntry"
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  RefundPostBody:
+    type: object
+    required:
+      - type
+      - data
+    properties:
+      type:
+        type: string
+        enum: ["Vending", "Laundry"]
+      data:
+        type: object
+        required:
+          - amount
+          - student
+        properties:
+          amount:
+            type: number
+            format: float
+          student:
+            type: ["string", "object"]
+          machine:
+            type: string
+          description:
+            type: string
+          respondingRA:
+            type: ["string", "object"]
+  CashLogPostBody:
+    type: object
+    required:
+      - cash
+      - quarters
+      - dimes
+      - nickels
+      - pennies
+      - found
+      - stamps
+      - postageDue
+      - laundryRefunds
+      - vendingRefunds
+    properties:
+      cash:
+        type: number
+        format: float
+        description: the summed value of cash
+      quarters:
+        type: number
+        format: float
+        description: the summed value of quarters
+      dimes:
+        type: number
+        format: float
+        description: the summed value of dimes
+      nickels:
+        type: number
+        format: float
+        description: the summed value of nickels
+      pennies:
+        type: number
+        format: float
+        description: the summed value of pennies
+      found:
+        type: number
+        format: float
+      stamps:
+        type: number
+        format: float
+        description: the summed value of stamps
+      postageDue:
+        type: number
+        format: float
+      laundryRefunds:
+        type: number
+        format: float
+      vendingRefunds:
+        type: number
+        format: float
+  CashLogEntry:
+    type: ["object", "null"]
+    required:
+      - cash
+      - quarters
+      - dimes
+      - nickels
+      - pennies
+      - found
+      - stamps
+      - postageDue
+      - laundryRefunds
+      - vendingRefunds
+    properties:
+      "_id":
+        type: string
+        description: unique hash id
+      cash:
+        type: number
+        format: float
+        description: the summed value of cash
+      quarters:
+        type: number
+        format: float
+        description: the summed value of quarters
+      dimes:
+        type: number
+        format: float
+        description: the summed value of dimes
+      nickels:
+        type: number
+        format: float
+        description: the summed value of nickels
+      pennies:
+        type: number
+        format: float
+        description: the summed value of pennies
+      found:
+        type: number
+        format: float
+      stamps:
+        type: number
+        format: float
+        description: the summed value of stamps
+      postageDue:
+        type: number
+        format: float
+      laundryRefunds:
+        type: number
+        format: float
+      vendingRefunds:
+        type: number
+        format: float
+parameters:
+  AuthHeader:
+    name: Authorization
+    in: header
+    description: the user JWT token
+    required: true
+    type: string
